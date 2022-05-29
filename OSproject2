@@ -1,0 +1,96 @@
+import math
+from operator import countOf
+import os
+from tkinter import filedialog
+
+def need_memory(num):
+    return math.ceil(p_size[num] / offset_size)
+
+
+read_path = filedialog.askopenfilenames(initialdir="./txt",\
+                 title = "파일을 선택 해 주세요",\
+                    filetypes = (("txt files", "*.txt"),))[0]        #files 변수에 선택 파일 경로 넣기
+
+write_path = 'C:/Users/eogus/OneDrive/바탕 화면/학교/운영체제 및 실습/프로젝트/프로젝트 2번/input파일/result.txt'
+
+new_file = open(write_path, 'w')
+
+print(read_path)    #읽을 파일의 경로 출력
+
+text = open(read_path, 'r') #파일 읽기
+lines = text.readlines()
+line = text.readline()
+
+p_size = ['']
+p_time = ['']
+need_page = ['']
+memory = []
+running_p = [0]
+running_time = []
+
+for line in lines:
+    line = line.replace(',', ' ')
+    line_token = []
+    line_token = line.split()
+
+    head = line_token[0]
+
+    print(line_token)
+
+    if head == 'Page':
+        page_bit = int(line_token[2])
+        memory_length = 2 ** page_bit
+
+    elif head == 'Offset':
+        offset_size = 2 ** int(line_token[2])    
+
+    elif len(line_token[0]) == 2:
+        p_size.append(int(line_token[1]))
+        p_time.append(int(line_token[2]))
+        need_page.append(math.ceil(int(line_token[1])/offset_size))
+print(need_page)
+now_time = 0
+p = 1
+
+# T = 0
+new_file.write('************************\n')
+new_file.write('** T=%d Paging Table **\n' %now_time)
+for p in range(1, 5):
+    if memory_length - need_page[p] >= 0:
+        for i in range(0, need_page[p]):
+            memory.append('P%d, %s, %s, T%d~T%d' %(p, bin(i)[2:].zfill(page_bit), bin(len(memory))[2:].zfill(page_bit), now_time, p_time[p]))
+            memory_length -= 1
+    running_p.append(p)
+
+    if memory_length - need_page[p+1] <= 0:
+        break
+
+memory_length = 2 ** page_bit
+
+if memory_length > len(memory):
+    memory.append('-, -, %s, -' %(bin(len(memory))[2:].zfill(page_bit)))
+
+for a in range(0, len(memory)):
+    new_file.write(memory[a] + '\n')
+
+new_file.write('** T=%d Process State **\n' %now_time)
+for r in range(1, len(need_page)):
+    if r in running_p:
+        new_file.write('P%d, 실행중, %d개 page 사용\n' %(r, need_page[r]))
+        running_time.append(p_time[r])
+    else:
+        new_file.write('P%d, 미실행\n' %r)
+new_file.write('*****20181312 김대현*****\n')
+now_time = min(running_time)
+running_time.remove(min(running_time))
+# T = n
+new_file.write('\n************************\n')
+new_file.write('** T=%d Paging Table **\n' %now_time)
+
+for i in range(0, memory_length):
+    if ('T2' in memory[i]) | ('-' in memory[i]):
+        memory[i] = ''
+
+
+print(memory.index(''))
+print(memory)
